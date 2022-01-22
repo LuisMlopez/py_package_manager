@@ -8,6 +8,7 @@ PACKAGES = {
 
 
 def _process_input(input_line):
+    print(input_line)
     command, *args = input_line.split(' ')
 
     if command.upper() == 'DEPEND':
@@ -44,10 +45,12 @@ def _process_input(input_line):
         dependecies = registed_packages.get(package_name)
 
         installed_packages.append(package_name)
+        print(f'{package_name.upper()} successfully installed')
 
         for dependency in dependecies:
             if dependency not in installed_packages:
                 installed_packages.append(dependency)
+                print(f'{dependency.upper()} successfully installed')
 
     elif command.upper() == 'REMOVE':
         if not args:
@@ -64,6 +67,7 @@ def _process_input(input_line):
             return
 
         installed_packages.remove(package_name)
+        print(f'{package_name.upper()} successfully removed')
 
         dependecies = registed_packages.get(package_name)
         dependencies_in_use = list()
@@ -71,11 +75,14 @@ def _process_input(input_line):
             for installed_package in installed_packages:
                 if dependency in registed_packages.get(installed_package, []):
                     dependencies_in_use.append(dependency)
+                    print(f'{dependency.upper()} is still needed')
 
             if dependency in dependencies_in_use:
                 continue
 
             installed_packages.remove(dependency)
+            print(f'{dependency.upper()} is no longer needed')
+            print(f'{dependency.upper()} successfully removed')
 
     elif command.upper() == 'LIST':
         installed_packages = PACKAGES.get(INSTALLED_PACKAGES)
