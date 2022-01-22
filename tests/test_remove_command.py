@@ -57,4 +57,4 @@ class TestRemoveCommand(unittest.TestCase):
         manager = CommandManager(command_class, self.interface, *args)
         result = manager.process_command()
 
-        self.assertEquals(result, 'Package is not installed')
+        self.assertEqual(result, 'Package is not installed')

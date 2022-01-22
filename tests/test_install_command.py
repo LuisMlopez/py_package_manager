@@ -36,17 +36,6 @@ class TestInstallCommand(unittest.TestCase):
         for dependency in dependencies:
             self.assertTrue(dependency in installed_packages)
 
-    def test_install_package_not_exist(self):
-        package_name = 'http'
-      
-        args = [package_name]
-        command_class = InstallCommand
-        manager = CommandManager(command_class, self.interface, *args)
-        manager.process_command()
-
-        installed_packages = self.interface.list_installed_packages()
-        self.assertFalse(package_name in installed_packages)
-
     def test_package_already_installed(self):
         package_name = 'http'
         self.interface.add_dependency(package_name)
@@ -59,3 +48,17 @@ class TestInstallCommand(unittest.TestCase):
 
         installed_packages = self.interface.list_installed_packages()
         self.assertTrue(package_name.lower() in installed_packages)
+
+    def test_install_package_that_is_a_dependency(self):
+        package_name = 'http'
+        dependency = 'ssh'
+        self.interface.add_dependency(package_name, [dependency])
+        self.interface.add_package(package_name)
+
+        args = [dependency]
+        command_class = InstallCommand
+        manager = CommandManager(command_class, self.interface, *args)
+        manager.process_command()
+
+        installed_packages = self.interface.list_installed_packages()
+        self.assertTrue(dependency in installed_packages)
