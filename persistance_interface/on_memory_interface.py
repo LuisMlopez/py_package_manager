@@ -20,9 +20,6 @@ class OnMemoryInterface(Interface):
         if package_name in self.installed_packages:
             return 'Package already installed'
 
-        if package_name not in self.registered_packages:
-            return 'Package not found'
-
         package_name = package_name.lower()
         installed = list()
 
@@ -34,7 +31,7 @@ class OnMemoryInterface(Interface):
 
     def _install_dependencies(self, package_name):
         installed = list()
-        dependecies = self.registered_packages.get(package_name)
+        dependecies = self.registered_packages.get(package_name, [])
 
         for dependency in dependecies:
             if dependency in self.installed_packages:
