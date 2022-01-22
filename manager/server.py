@@ -1,95 +1,45 @@
-REGISTERED_PACKAGES = 'registered'
-INSTALLED_PACKAGES = 'installed'
+from manager.depend import DependCommand
+from manager.install import InstallCommand
+from manager.list import ListCommand
+from manager.manager import CommandManager
+from manager.remove import RemoveCommand
+from persistance_interface.on_memory_interface import OnMemoryInterface
 
-PACKAGES = {
-    REGISTERED_PACKAGES: dict(),
-    INSTALLED_PACKAGES: list()
+COMMANDS = {
+    'DEPEND': DependCommand,
+    'INSTALL': InstallCommand,
+    'REMOVE': RemoveCommand,
+    'LIST': ListCommand
 }
+
+
+def _process_result(command_result):
+    if not command_result:
+        return
+
+    if isinstance(command_result, str):
+        print(command_result)
+
+    elif isinstance(command_result, list):
+        for result in command_result:
+            print(result)
 
 
 def _process_input(input_line):
     print(input_line)
     command, *args = input_line.split(' ')
 
-    if command.upper() == 'DEPEND':
-        if not args:
-            return
+    if command.upper() == 'END':
+        return True
 
-        package_name = args[0]
-        
-        dependecies = args[1:] if len(args) > 1 else []
-        dependecies = [dependency.lower() for dependency in dependecies]
-        
-        PACKAGES.get(REGISTERED_PACKAGES).update({
-            package_name.lower(): dependecies
-        })
+    command_class = COMMANDS.get(command.upper())
+    interface = OnMemoryInterface()
+    manager = CommandManager(command_class, interface, *args)
+    command_result = manager.process_command()
 
-    elif command.upper() == 'INSTALL':
-        if not args:
-            return
+    _process_result(command_result)
 
-        package_name = args[0]
-        package_name = package_name.lower()
-
-        registed_packages = PACKAGES.get(REGISTERED_PACKAGES)
-        installed_packages = PACKAGES.get(INSTALLED_PACKAGES)
-
-        if package_name in installed_packages:
-            print('Package already installed')
-            return
-
-        if package_name not in registed_packages:
-            print('Package not found')
-            return
-        
-        dependecies = registed_packages.get(package_name)
-
-        installed_packages.append(package_name)
-        print(f'{package_name.upper()} successfully installed')
-
-        for dependency in dependecies:
-            if dependency not in installed_packages:
-                installed_packages.append(dependency)
-                print(f'{dependency.upper()} successfully installed')
-
-    elif command.upper() == 'REMOVE':
-        if not args:
-            return
-
-        package_name = args[0]
-        package_name = package_name.lower()
-
-        installed_packages = PACKAGES.get(INSTALLED_PACKAGES)
-        registed_packages = PACKAGES.get(REGISTERED_PACKAGES)
-
-        if package_name not in installed_packages:
-            print('Package is not installed')
-            return
-
-        installed_packages.remove(package_name)
-        print(f'{package_name.upper()} successfully removed')
-
-        dependecies = registed_packages.get(package_name)
-        dependencies_in_use = list()
-        for dependency in dependecies:
-            for installed_package in installed_packages:
-                if dependency in registed_packages.get(installed_package, []):
-                    dependencies_in_use.append(dependency)
-                    print(f'{dependency.upper()} is still needed')
-
-            if dependency in dependencies_in_use:
-                continue
-
-            installed_packages.remove(dependency)
-            print(f'{dependency.upper()} is no longer needed')
-            print(f'{dependency.upper()} successfully removed')
-
-    elif command.upper() == 'LIST':
-        installed_packages = PACKAGES.get(INSTALLED_PACKAGES)
-        print('\n'.join(installed_packages))
-
-
-    return command.upper() == 'END'
+    return False
 
 
 def start_package_server():

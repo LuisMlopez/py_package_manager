@@ -1,61 +1,61 @@
 import unittest
 
-from manager.server import _process_input, PACKAGES, REGISTERED_PACKAGES, INSTALLED_PACKAGES
+from manager.manager import CommandManager
+from manager.install import InstallCommand
+from persistance_interface.on_memory_interface import OnMemoryInterface
 
 
 class TestInstallCommand(unittest.TestCase):
-    COMMAND_NAME = 'INSTALL'
-
     def setUp(self) -> None:
-        PACKAGES.update({
-            REGISTERED_PACKAGES: dict(),
-            INSTALLED_PACKAGES: list()
-        })
+        self.interface = OnMemoryInterface()
 
     def test_install_package(self):
-        installed_packages = PACKAGES.get(INSTALLED_PACKAGES)
-        registered_packages = PACKAGES.get(REGISTERED_PACKAGES)
-        package_name = 'HTTP'
-        registered_packages.update({
-            package_name.lower(): []
-        })
+        package_name = 'http'
+        self.interface.add_dependency(package_name)
         
-        command = f'{self.COMMAND_NAME} {package_name}'        
-        _process_input(command)
+        args = [package_name]
+        command_class = InstallCommand
+        manager = CommandManager(command_class, self.interface, *args)
+        manager.process_command()
 
-        self.assertTrue(package_name.lower() in installed_packages)
+        installed_packages = self.interface.list_installed_packages()
+        self.assertTrue(package_name in installed_packages)
 
     def test_install_package_and_dependecies(self):
-        installed_packages = PACKAGES.get(INSTALLED_PACKAGES)
-        registered_packages = PACKAGES.get(REGISTERED_PACKAGES)
-        package_name = 'HTTP'
-        dependencies = 'httplib ssh'
-        registered_packages.update({
-            package_name.lower(): dependencies.split(' ')
-        })
+        package_name = 'http'
+        dependencies = ['httplib', 'ssh']
+        self.interface.add_dependency(package_name, dependencies)
 
-        command = f'{self.COMMAND_NAME} {package_name} {dependencies}'
-        _process_input(command)
+        args = [package_name] + dependencies
+        command_class = InstallCommand
+        manager = CommandManager(command_class, self.interface, *args)
+        manager.process_command()
 
-        self.assertTrue(package_name.lower() in installed_packages)
-        for dependency in dependencies.split(' '):
+        installed_packages = self.interface.list_installed_packages()
+        self.assertTrue(package_name in installed_packages)
+        for dependency in dependencies:
             self.assertTrue(dependency in installed_packages)
 
     def test_install_package_not_exist(self):
-        installed_packages = PACKAGES.get(INSTALLED_PACKAGES)
-        package_name = 'HTTP'
+        package_name = 'http'
+      
+        args = [package_name]
+        command_class = InstallCommand
+        manager = CommandManager(command_class, self.interface, *args)
+        manager.process_command()
 
-        command = f'{self.COMMAND_NAME} {package_name}'        
-        _process_input(command)
-
-        self.assertFalse(package_name.lower() in installed_packages)
+        installed_packages = self.interface.list_installed_packages()
+        self.assertFalse(package_name in installed_packages)
 
     def test_package_already_installed(self):
-        installed_packages = PACKAGES.get(INSTALLED_PACKAGES)
-        package_name = 'HTTP'
-        installed_packages.append(package_name.lower())
+        package_name = 'http'
+        self.interface.add_dependency(package_name)
+        self.interface.add_package(package_name)
 
-        command = f'{self.COMMAND_NAME} {package_name}'        
-        _process_input(command)
+        args = [package_name]
+        command_class = InstallCommand
+        manager = CommandManager(command_class, self.interface, *args)
+        manager.process_command()
 
+        installed_packages = self.interface.list_installed_packages()
         self.assertTrue(package_name.lower() in installed_packages)

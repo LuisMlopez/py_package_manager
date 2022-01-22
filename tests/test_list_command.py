@@ -1,21 +1,23 @@
 import unittest
 
-from manager.server import _process_input, PACKAGES, REGISTERED_PACKAGES, INSTALLED_PACKAGES
+from manager.manager import CommandManager
+from manager.list import ListCommand
+from persistance_interface.on_memory_interface import OnMemoryInterface
 
 
 class TestRemoveCommand(unittest.TestCase):
-    COMMAND_NAME = 'LIST'
-
     def setUp(self) -> None:
         self.package_name = 'http'
         self.dependency = 'httplib'
-        PACKAGES.update({
-            REGISTERED_PACKAGES: {
-                self.package_name: [self.dependency]
-            },
-            INSTALLED_PACKAGES: [self.package_name, self.dependency]
-        })
+        self.interface = OnMemoryInterface()
+
+        self.interface.add_dependency(self.package_name, [self.dependency])
+        self.interface.add_package(self.package_name)
 
     def test_list_installed_packages(self):
-        command = f'{self.COMMAND_NAME} {self.package_name}'        
-        _process_input(command)
+        command_class = ListCommand
+        manager = CommandManager(command_class, self.interface, None)
+        result = manager.process_command()
+
+        self.assertTrue(self.package_name.upper() in result)
+        self.assertTrue(self.dependency.upper() in result)

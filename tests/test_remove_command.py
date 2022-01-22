@@ -1,60 +1,60 @@
 import unittest
 
-from manager.server import _process_input, PACKAGES, REGISTERED_PACKAGES, INSTALLED_PACKAGES
+from manager.manager import CommandManager
+from manager.remove import RemoveCommand
+from persistance_interface.on_memory_interface import OnMemoryInterface
 
 
 class TestRemoveCommand(unittest.TestCase):
-    COMMAND_NAME = 'REMOVE'
-
     def setUp(self) -> None:
         self.package_name = 'http'
         self.dependency = 'httplib'
-        PACKAGES.update({
-            REGISTERED_PACKAGES: {
-                self.package_name: [self.dependency]
-            },
-            INSTALLED_PACKAGES: [self.package_name, self.dependency]
-        })
+        self.interface = OnMemoryInterface()
 
-    def test_remove_package(self):
-        installed_packages = PACKAGES.get(INSTALLED_PACKAGES)
-        
-        command = f'{self.COMMAND_NAME} {self.package_name}'        
-        _process_input(command)
+        self.interface.add_dependency(self.package_name, [self.dependency])
+        self.interface.add_package(self.package_name)
 
+    def test_remove_package(self):        
+        args = [self.package_name]
+        command_class = RemoveCommand
+        manager = CommandManager(command_class, self.interface, *args)
+        manager.process_command()
+
+        installed_packages = self.interface.list_installed_packages()
         self.assertFalse(self.package_name in installed_packages)
 
     def test_remove_package_and_dependecies(self):
-        installed_packages = PACKAGES.get(INSTALLED_PACKAGES)
+        args = [self.package_name]
+        command_class = RemoveCommand
+        manager = CommandManager(command_class, self.interface, *args)
+        manager.process_command()
 
-        command = f'{self.COMMAND_NAME} {self.package_name}'
-        _process_input(command)
+        installed_packages = self.interface.list_installed_packages()
 
         self.assertFalse(self.package_name in installed_packages)
         self.assertFalse(self.dependency in installed_packages)
 
     def test_remove_package_and_dependencies_not_possible(self):
-        registered_packages = PACKAGES.get(REGISTERED_PACKAGES)
-        installed_packages = PACKAGES.get(INSTALLED_PACKAGES)
+        ssh_package = 'ssh'
+        self.interface.add_dependency(ssh_package, [self.dependency])
+        self.interface.add_package(ssh_package)
 
-        registered_packages.update({
-            'ssh': [self.dependency]
-        })
-        installed_packages.append('ssh')
+        args = [self.package_name]
+        command_class = RemoveCommand
+        manager = CommandManager(command_class, self.interface, *args)
+        manager.process_command()
 
-        command = f'{self.COMMAND_NAME} {self.package_name}'
-        _process_input(command)
+        installed_packages = self.interface.list_installed_packages()
 
         self.assertFalse(self.package_name in installed_packages)
         self.assertTrue(self.dependency in installed_packages)
 
     def test_remove_package_not_exist(self):
-        PACKAGES.update({
-            INSTALLED_PACKAGES: list()
-        })
-        installed_packages = PACKAGES.get(INSTALLED_PACKAGES)
+        ssh_package = 'ssh'
 
-        command = f'{self.COMMAND_NAME} {self.package_name}'
-        _process_input(command)
+        args = [ssh_package]
+        command_class = RemoveCommand
+        manager = CommandManager(command_class, self.interface, *args)
+        result = manager.process_command()
 
-        self.assertFalse(self.package_name in installed_packages)
+        self.assertEquals(result, 'Package is not installed')
