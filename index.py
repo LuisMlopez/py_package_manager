@@ -1,4 +1,4 @@
-from manager.server import start_package_server
+from server import start_package_server
 
 
 if __name__ == '__main__':
