@@ -14,20 +14,23 @@ COMMANDS = {
 
 DB_INTERFACE = OnMemoryInterface()
 
+
 def _process_result(command_result):
     if not command_result:
         return
 
+    tab = '   {}'
+
     if isinstance(command_result, str):
-        print(command_result)
+        print(tab.format(command_result))
 
     elif isinstance(command_result, list):
         for result in command_result:
-            print(result)
+            print(tab.format(result))
 
 
 def _process_input(input_line):
-    print(input_line)
+    print(input_line.upper())
     command, *args = input_line.split(' ')
 
     if command.upper() == 'END':
