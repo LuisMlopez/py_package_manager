@@ -12,6 +12,7 @@ COMMANDS = {
     'LIST': ListCommand
 }
 
+DB_INTERFACE = OnMemoryInterface()
 
 def _process_result(command_result):
     if not command_result:
@@ -33,8 +34,12 @@ def _process_input(input_line):
         return True
 
     command_class = COMMANDS.get(command.upper())
-    interface = OnMemoryInterface()
-    manager = CommandManager(command_class, interface, *args)
+
+    if command_class is None:
+        print('Invalid command')
+        return
+
+    manager = CommandManager(command_class, DB_INTERFACE, *args)
     command_result = manager.process_command()
 
     _process_result(command_result)
