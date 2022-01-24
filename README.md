@@ -12,8 +12,8 @@ Run the next command in the project root:
 
 `python -m unittest`
 
-## How to Execute
+## How to Execute
 
-The start point is the index.py file. Running the next command you the server will start listening:
+The start point is the index.py file. Running the next command the server will start listening:
 
 `python index.py`
